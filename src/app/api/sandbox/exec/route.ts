@@ -1,23 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { execSchema } from "@/lib/validation";
+import { checkRateLimit, rateKey, LIMITS } from "@/lib/rate-limit";
+import { toResponse } from "@/lib/errors";
 import { getSandbox } from "@/lib/sandbox-manager";
+import { audit } from "@/lib/audit";
 
-const Body = z.object({
-  sandboxId: z.string().min(1),
-  cmd: z.string().min(1).max(2000),
-  timeoutMs: z.number().optional().default(30_000),
-});
+// أوامر محظورة (حماية)
+const BLOCKED = [/rm\s+-rf\s+\//, /mkfs/, /dd\s+if=/, /:\(\)\{\s*:\|\:&\s*\};:/];
 
 export async function POST(req: NextRequest) {
+  const rl = await checkRateLimit(rateKey(req, "exec"), LIMITS.exec);
+  if (!rl.ok) return NextResponse.json({ error: "تم تجاوز الحد — انتظر قليلاً", code: "RATE_LIMITED" }, { status: 429 });
+
   try {
-    const body = Body.parse(await req.json());
+    const body = execSchema.parse(await req.json());
+
+    // فحص الأمان
+    for (const re of BLOCKED) {
+      if (re.test(body.cmd)) return NextResponse.json({ error: "أمر محظور لأسباب أمنية", code: "FORBIDDEN" }, { status: 403 });
+    }
+
+    const userId = req.headers.get("x-user-id") ?? "anon";
     const sb = await getSandbox(body.sandboxId);
-    const res = await sb.runCommand({ cmd: "bash", args: ["-lc", body.cmd] });
-    const stdout = await res.stdout();
-    const stderr = await res.stderr();
-    return NextResponse.json({ exitCode: res.exitCode, stdout: stdout.toString(), stderr: stderr.toString() });
+
+    const full = body.cwd ? `cd "${body.cwd}" && ${body.cmd}` : body.cmd;
+    const res = await sb.runCommand({
+      cmd: "bash",
+      args: ["-lc", full],
+      ...(body.sudo ? { sudo: true } : {}),
+    });
+
+    const stdout = (await res.stdout()).toString();
+    const stderr = (await res.stderr()).toString();
+
+    await audit({ action: "sandbox.exec", userId, sandboxId: body.sandboxId, meta: { cmd: body.cmd.slice(0, 200) } });
+
+    return NextResponse.json({ exitCode: res.exitCode, stdout, stderr }, { headers: { "X-RateLimit-Remaining": String(rl.remaining) } });
   } catch (e) {
-    const err = e as Error;
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    const { status, body } = toResponse(e);
+    return NextResponse.json(body, { status });
   }
 }

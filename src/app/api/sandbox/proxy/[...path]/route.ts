@@ -1,13 +1,12 @@
 /**
- * Proxy → OpenCode web داخل Sandbox
- * نمرّر كل شيء (HTML, WS upgrade, assets) من sb-xxxx.vercel.run:4096
- *
- * ملاحظة: توثيق Vercel Sandbox ينصح باستخدام sandbox.domain(port) مباشرة،
- * لكن الـ proxy يسمح بالتحكم بالـ auth وعدم كشف الـ domain الأصلي.
+ * Proxy → OpenCode web داخل Sandbox (v2)
+ * + rate limit + audit + إزالة هيدرز الحظر + إعادة كتابة الروابط
  */
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionMeta } from "@/lib/persistence";
 import type { SandboxSession } from "@/lib/sandbox-manager";
+import { checkRateLimit, rateKey, LIMITS } from "@/lib/rate-limit";
+import { audit } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -18,56 +17,61 @@ async function handler(req: NextRequest, ctx: { params: Promise<{ path: string[]
   const sandboxId = path[0];
   const rest = path.slice(1).join("/");
 
+  // Rate limit للـ proxy
+  const rl = await checkRateLimit(rateKey(req, "proxy"), LIMITS.proxy);
+  if (!rl.ok) return NextResponse.json({ error: "تم تجاوز الحد" }, { status: 429 });
+
   const meta = await getSessionMeta<SandboxSession>(`sb:${sandboxId}`);
   if (!meta?.domain) {
-    return new NextResponse(
-      `Sandbox غير موجود أو انتهى. أنشئ جلسة جديدة من /dashboard\nSandbox: ${sandboxId}`,
-      { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8" } }
-    );
+    return new NextResponse(`Sandbox غير موجود أو انتهى — أنشئ جلسة جديدة من /dashboard\nSandbox: ${sandboxId}`, {
+      status: 404,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
+
+  if (meta.passwordProtected && !req.headers.get("authorization")) {
+    return new NextResponse("Auth required", { status: 401, headers: { "WWW-Authenticate": 'Basic realm="OpenCode"' } });
   }
 
   const targetUrl = new URL(`/${rest}`, meta.domain);
-  // حافظ على query و path
   req.nextUrl.searchParams.forEach((v, k) => targetUrl.searchParams.set(k, v));
 
-  // تحقق من كلمة المرور إن وُجدت (Basic Auth)
-  if (meta.passwordProtected) {
-    const auth = req.headers.get("authorization");
-    // نتوقع Basic opencode:<password> — اسم المستخدم افتراضياً opencode
-    if (!auth) {
-      return new NextResponse("Auth required", {
-        status: 401,
-        headers: { "WWW-Authenticate": 'Basic realm="OpenCode"' },
-      });
-    }
+  // سجل audit للوصول
+  const userId = req.headers.get("x-user-id") ?? "anon";
+  if (rest === "" || rest === "/") {
+    audit({ action: "sandbox.proxy", userId, sandboxId }).catch(() => {});
   }
 
   try {
     const headers: Record<string, string> = {};
-    // مرّر الهيدرز المهمة فقط
-    const passThrough = ["content-type", "authorization", "cookie", "accept", "accept-language", "user-agent"];
-    for (const h of passThrough) {
+    for (const h of ["content-type", "authorization", "cookie", "accept", "accept-language", "user-agent"]) {
       const v = req.headers.get(h);
       if (v) headers[h] = v;
     }
+    // مرّر الـ host الصحيح
+    headers["x-forwarded-host"] = req.headers.get("host") ?? "";
 
     const upstream = await fetch(targetUrl.toString(), {
       method: req.method,
       headers,
       body: req.method !== "GET" && req.method !== "HEAD" ? await req.arrayBuffer() : undefined,
-      // مهم لـ WebSocket upgrade — Next.js يمرّره تلقائياً إن كان التروكسي يدعمها
+      redirect: "manual",
     });
 
     const resHeaders = new Headers(upstream.headers);
-    // إزالة هيدرز تمنع الـ iframe
     resHeaders.delete("x-frame-options");
     resHeaders.delete("content-security-policy");
+    resHeaders.delete("content-security-policy-report-only");
     resHeaders.set("X-Proxy-By", "opencode-cloud");
+    resHeaders.set("X-RateLimit-Remaining", String(rl.remaining));
 
-    return new NextResponse(upstream.body, {
-      status: upstream.status,
-      headers: resHeaders,
-    });
+    // إعادة كتابة redirect ليبقى داخل الـ proxy
+    const loc = resHeaders.get("location");
+    if (loc && loc.startsWith(meta.domain)) {
+      resHeaders.set("location", loc.replace(meta.domain, `${req.nextUrl.origin}/api/sandbox/proxy/${sandboxId}`));
+    }
+
+    return new NextResponse(upstream.body, { status: upstream.status, headers: resHeaders });
   } catch (e) {
     const err = e as Error;
     return new NextResponse(`Proxy error: ${err.message}\nTarget: ${targetUrl}`, { status: 502 });

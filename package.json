@@ -1,6 +1,6 @@
 {
   "name": "opencode-cloud",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "تشغيل OpenCode الأصلي داخل Vercel Sandbox مع واجهته الكاملة — AI Agent، Terminal، Git، جلسات متعددة، ودعم Android",
   "private": true,
   "type": "module",
@@ -13,6 +13,10 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "check": "npm run typecheck && npm test && npm run build",
     "sandbox:bootstrap": "tsx scripts/bootstrap-sandbox.ts",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
@@ -48,6 +52,8 @@
     "postcss": "^8.5.1",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8",
+    "@vitest/coverage-v8": "^2.1.8"
   }
 }

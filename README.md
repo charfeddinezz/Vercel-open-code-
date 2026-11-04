@@ -17,6 +17,14 @@
 - اختيار النماذج عبر **OpenRouter** (مع دعم المجانية `:free`)
 - دخول من **هاتفك** عبر الإنترنت — PWA جاهز لـ Android
 
+## 🆕 جديد في v1.1
+- مساحة عمل جلسة بتبويبات: OpenCode / Terminal بسجل أوامر / مستعرض ملفات بمعاينة / سجلات حية / مقاييس وتكلفة
+- روابط **مشاركة مؤقتة** للجلسات (`/s/[id]`) بصلاحية وحد مشاهدات
+- **Rate limiting** + سجل تدقيق + قائمة أوامر محظورة + تحقق Zod شامل برسائل عربية
+- APIs: ‏`health` / `logs` / `metrics` / `files` / `snapshot` / `projects` / `usage`
+- اختيار Runtime ‏(node22/node24/python3.13) و vCPUs والمدة من لوحة التحكم
+- اختبارات Vitest + CI تلقائي — التفاصيل في [`docs/ENHANCEMENTS_V2.md`](docs/ENHANCEMENTS_V2.md) والأمان في [`SECURITY.md`](SECURITY.md)
+
 ## 🏗️ البنية
 ```
 Android / PC

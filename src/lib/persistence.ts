@@ -29,20 +29,28 @@ async function kv() {
 }
 
 export async function saveSessionMeta(key: string, data: unknown, ttlSec = 3600 * 24) {
-  const client = await kv();
-  if (!client) return;
-  await client.set(key, JSON.stringify(data), { ex: ttlSec });
+  try {
+    const client = await kv();
+    if (!client) return;
+    await client.set(key, JSON.stringify(data), { ex: ttlSec });
+  } catch {
+    // KV غير مضبوط — الحفظ اختياري، لا نكسر العملية الأساسية
+  }
 }
 
 export async function getSessionMeta<T>(key: string): Promise<T | null> {
-  const client = await kv();
-  if (!client) return null;
-  const raw = await client.get<string>(key);
-  if (!raw) return null;
   try {
-    return JSON.parse(raw) as T;
+    const client = await kv();
+    if (!client) return null;
+    const raw = await client.get<string>(key);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      return raw as unknown as T;
+    }
   } catch {
-    return raw as unknown as T;
+    return null;
   }
 }
 
