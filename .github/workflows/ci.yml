@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "arena/**"]
+  pull_request:
+
+jobs:
+  build:
+    name: Typecheck • Test • Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          # قيم وهمية للبناء فقط — لا أسرار حقيقية في CI
+          OPENROUTER_API_KEY: "ci-dummy"
+          AUTH_SECRET: "ci-dummy-secret-at-least-16-chars"
