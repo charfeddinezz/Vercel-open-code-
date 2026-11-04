@@ -72,6 +72,9 @@ export function ShareModal({ sandboxId, onClose }: { sandboxId: string; onClose:
               <input readOnly value={url} dir="ltr" className="flex-1 rounded-xl bg-black border border-white/10 px-3 py-2.5 text-xs font-mono" />
               <button onClick={copy} className="px-4 rounded-xl bg-white text-black text-sm font-medium">{copied ? "تم ✓" : "نسخ"}</button>
             </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`/api/qr?text=${encodeURIComponent(url)}`} alt="QR للمشاركة" width={140} height={140} className="mx-auto rounded-xl bg-white p-1" />
+            <p className="text-center text-[11px] text-zinc-500">امسحه بهاتف آخر لفتح الجلسة فوراً</p>
             <a href={url} target="_blank" rel="noreferrer" className="block text-center text-sm text-violet-300 hover:underline">فتح الرابط للتجربة ↗</a>
             <button onClick={onClose} className="w-full rounded-xl border border-white/15 py-2.5 text-sm hover:bg-white/10">إغلاق</button>
           </div>

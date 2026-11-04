@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 export default function HomePage() {
   return (
@@ -25,6 +26,9 @@ export default function HomePage() {
             <p className="inline-flex items-center gap-2 text-xs px-3 py-1 rounded-full bg-violet-500/15 border border-violet-500/20 text-violet-200">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" /> الخيار A — OpenCode الأصلي 100%
             </p>
+            <p className="mr-2 inline-flex items-center gap-2 text-xs px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/25 text-emerald-200 font-semibold">
+              💸 مجاني بالكامل — 0$ وبدون بطاقة ائتمان
+            </p>
             <h1 className="mt-4 text-4xl sm:text-5xl font-black leading-[1.05] tracking-tight">
               واجهة OpenCode الأصلية
               <br />
@@ -34,7 +38,12 @@ export default function HomePage() {
               AI Agent لإنشاء وتعديل المشاريع، قراءة الملفات وإعادة هيكلتها، Terminal كامل، جلسات متعددة، Git وGitHub، واختيار النماذج — كلها تعمل داخل Vercel Sandbox المعزول. افتحها من هاتفك.
             </p>
 
+            <div className="mt-6">
+              <InstallPrompt />
+            </div>
+
             <div className="mt-6 flex flex-wrap gap-3">
+              <Link href="/connect" className="px-5 py-3 rounded-xl bg-gradient-to-l from-violet-500 to-fuchsia-500 text-white font-bold hover:opacity-90 transition">🔗 اربط كل شيء مجاناً (دقيقتان)</Link>
               <Link href="/dashboard" className="px-5 py-3 rounded-xl bg-white text-black font-semibold hover:bg-zinc-100 transition">ابدأ جلسة جديدة →</Link>
               <a href="https://opencode.ai/docs" target="_blank" className="px-5 py-3 rounded-xl border border-white/15 hover:bg-white/10 transition text-sm">توثيق OpenCode</a>
               <a href="https://openrouter.ai/keys" target="_blank" className="px-5 py-3 rounded-xl border border-white/15 hover:bg-white/10 transition text-sm">احصل على OpenRouter Key</a>

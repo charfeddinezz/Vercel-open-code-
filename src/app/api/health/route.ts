@@ -12,7 +12,7 @@ export async function GET() {
   const allOk = checks.openrouter.ok;
   return NextResponse.json({
     ok: allOk,
-    version: "1.2.0",
+    version: "1.3.0",
     runtime: "node22",
     time: new Date().toISOString(),
     checks,

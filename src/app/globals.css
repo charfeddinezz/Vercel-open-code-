@@ -30,9 +30,16 @@ body {
   border-radius: 6px;
 }
 
-/* منع تكبير iOS عند تركيز الحقول */
+/* منع تكبير iOS عند تركيز الحقول + مساحة للتنقل السفلي */
 @media (max-width: 640px) {
   input, select, textarea { font-size: 16px; }
+  body { padding-bottom: calc(57px + env(safe-area-inset-bottom)); }
+}
+
+/* أهداف لمس مريحة على الهاتف */
+@media (pointer: coarse) {
+  button, a, select { min-height: 40px; }
+  nav button, nav a { min-height: unset; }
 }
 
 /* حركات خفيفة */

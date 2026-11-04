@@ -5,6 +5,7 @@ import { sandboxCreateSchema } from "@/lib/validation";
 import { checkRateLimit, rateKey, LIMITS } from "@/lib/rate-limit";
 import { Errors, toResponse } from "@/lib/errors";
 import { logger } from "@/lib/logger";
+import { assertModelAllowed } from "@/lib/free";
 
 export async function POST(req: NextRequest) {
   // Rate limit
@@ -17,6 +18,13 @@ export async function POST(req: NextRequest) {
   try {
     const json = await req.json();
     const body = sandboxCreateSchema.parse(json);
+
+    // الوضع المجاني بالكامل: رفض النماذج المدفوعة افتراضياً
+    const allowed = assertModelAllowed(body.model);
+    if (!allowed.ok) {
+      return NextResponse.json({ error: allowed.error, code: "PAID_MODEL_BLOCKED", freeMode: true }, { status: 400 });
+    }
+    body.model = allowed.model;
 
     const userId = req.headers.get("x-user-id") ?? `anon-${(req.headers.get("x-forwarded-for") ?? "local").split(",")[0]?.trim()}`.slice(0, 64);
     const openRouterKey = process.env.OPENROUTER_API_KEY;

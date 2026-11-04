@@ -5,6 +5,7 @@ import { ModelPicker } from "@/components/ModelPicker";
 import { ShareModal } from "@/components/ShareModal";
 import { TEMPLATES } from "@/lib/templates";
 import { usePreferences } from "@/lib/preferences";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 type SandboxRow = {
   sandboxId: string;
@@ -135,6 +136,10 @@ export default function DashboardPage() {
         </div>
       )}
 
+      <div className="mx-auto max-w-6xl px-4 pt-4">
+        <InstallPrompt />
+      </div>
+
       <main className="mx-auto max-w-6xl px-4 py-6 grid lg:grid-cols-5 gap-5">
         {/* Create */}
         <section className="lg:col-span-2 rounded-3xl border border-white/10 bg-white/[0.03] p-5 h-fit lg:sticky lg:top-[72px]">
@@ -196,8 +201,9 @@ export default function DashboardPage() {
             </label>
 
             <button onClick={create} disabled={busy} className="w-full rounded-xl bg-white text-black font-bold py-3.5 hover:bg-zinc-100 disabled:opacity-50 transition">
-              {busy ? "جاري التشغيل… (20-60 ثانية)" : "إنشاء جلسة وفتح OpenCode ←"}
+              {busy ? "جاري التشغيل… (20-60 ثانية)" : "إنشاء جلسة مجانية وفتح OpenCode ←"}
             </button>
+            <p className="text-center text-[11px] text-emerald-300/90">🆓 الوضع المجاني مفعّل — النماذج المدفوعة محظورة تلقائياً حتى لا تدفع شيئاً أبداً</p>
             {msg && <p className={`text-xs leading-6 p-3 rounded-xl border break-words ${isError ? "bg-red-500/10 border-red-500/25 text-red-200" : "bg-white/5 border-white/10"}`} role="status">{msg}</p>}
             <p className="text-[11px] text-zinc-500 leading-5">الـ Sandbox مؤقت. نحفظ تلقائياً في GitHub + Snapshot قبل الانتهاء، ويمكنك الاستعادة باسم المشروع نفسه.</p>
           </div>

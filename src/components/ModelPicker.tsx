@@ -15,7 +15,7 @@ const CURATED: ModelOpt[] = [
 export function ModelPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [live, setLive] = useState<ModelOpt[]>([]);
   const [query, setQuery] = useState("");
-  const [freeOnly, setFreeOnly] = useState(false);
+  const [freeOnly, setFreeOnly] = useState(true);
 
   useEffect(() => {
     const t = setTimeout(() => {

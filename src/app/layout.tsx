@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { PwaRegister } from "@/components/PwaRegister";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 
 export const metadata: Metadata = {
   title: "OpenCode Cloud — واجهة OpenCode الأصلية على Vercel",
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ar" dir="rtl">
       <body className="min-h-screen bg-[#0a0a0a] text-zinc-100 antialiased selection:bg-violet-500/30">
         {children}
+        <MobileBottomNav />
         <PwaRegister />
       </body>
     </html>
