@@ -5,15 +5,17 @@ import { FileTree } from "./FileTree";
 import { LogsViewer } from "./LogsViewer";
 import { MetricsCard } from "./MetricsCard";
 import { ShareModal } from "./ShareModal";
+import { GitPanel } from "./GitPanel";
 
-type Tab = "opencode" | "terminal" | "files" | "logs" | "metrics";
+type Tab = "opencode" | "terminal" | "files" | "git" | "logs" | "metrics";
 
-const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: "opencode", label: "OpenCode", icon: "🤖" },
-  { id: "terminal", label: "Terminal", icon: "⌨️" },
-  { id: "files", label: "الملفات", icon: "📁" },
-  { id: "logs", label: "السجلات", icon: "📜" },
-  { id: "metrics", label: "المقاييس", icon: "📊" },
+const TABS: { id: Tab; label: string; icon: string; key: string }[] = [
+  { id: "opencode", label: "OpenCode", icon: "🤖", key: "1" },
+  { id: "terminal", label: "Terminal", icon: "⌨️", key: "2" },
+  { id: "files", label: "الملفات", icon: "📁", key: "3" },
+  { id: "git", label: "Git", icon: "🐙", key: "4" },
+  { id: "logs", label: "السجلات", icon: "📜", key: "5" },
+  { id: "metrics", label: "المقاييس", icon: "📊", key: "6" },
 ];
 
 export function SessionWorkspace({ sandboxId }: { sandboxId: string }) {
@@ -38,6 +40,24 @@ export function SessionWorkspace({ sandboxId }: { sandboxId: string }) {
     const id = setInterval(poll, 15000);
     return () => clearInterval(id);
   }, [poll]);
+
+  // اختصارات لوحة مفاتيح: Alt+1..6 للتبويبات، Alt+S للمشاركة
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (!e.altKey) return;
+      const t = TABS.find((x) => x.key === e.key);
+      if (t) {
+        e.preventDefault();
+        setTab(t.id);
+      }
+      if (e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        setSharing(true);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   function notify(msg: string) {
     setToast(msg);
@@ -107,6 +127,11 @@ export function SessionWorkspace({ sandboxId }: { sandboxId: string }) {
             <div className="max-w-6xl mx-auto"><FileTree sandboxId={sandboxId} /></div>
           </div>
         )}
+        {tab === "git" && (
+          <div className="absolute inset-0 overflow-auto p-3 sm:p-4">
+            <div className="max-w-5xl mx-auto"><GitPanel sandboxId={sandboxId} /></div>
+          </div>
+        )}
         {tab === "logs" && (
           <div className="absolute inset-0 overflow-auto p-3 sm:p-4">
             <div className="max-w-5xl mx-auto"><LogsViewer sandboxId={sandboxId} /></div>
@@ -120,7 +145,7 @@ export function SessionWorkspace({ sandboxId }: { sandboxId: string }) {
       </div>
 
       <footer className="shrink-0 h-7 border-t border-white/10 bg-black/50 text-[11px] text-zinc-500 flex items-center justify-center px-2 text-center">
-        OpenCode {isUp ? "متصل ✓" : "جاري الاتصال…"} — الـ Sandbox مؤقت، يُحفظ عملك في GitHub + Snapshot
+        OpenCode {isUp ? "متصل ✓" : "جاري الاتصال…"} — اختصارات: Alt+1..6 للتبويبات، Alt+S للمشاركة
       </footer>
 
       {toast && <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[90] px-4 py-2.5 rounded-full bg-zinc-900 border border-white/15 text-sm shadow-2xl max-w-[92vw] text-center" role="status">{toast}</div>}

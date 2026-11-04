@@ -10,6 +10,22 @@ import { OPENCODE, SANDBOX } from "./constants";
 import { logger } from "./logger";
 import { withRetry } from "./retry";
 import { audit } from "./audit";
+import { getTemplate } from "./templates";
+
+async function applyTemplate(sandbox: Sandbox, templateId: string) {
+  const t = getTemplate(templateId);
+  logger.info("template:apply", { template: t.id });
+  if (t.files.length) {
+    await sandbox.writeFiles(t.files.map((f) => ({ path: f.path, content: Buffer.from(f.content) })));
+  }
+  for (const cmd of t.commands) {
+    try {
+      await sandbox.runCommand({ cmd: "bash", args: ["-lc", cmd] });
+    } catch (e) {
+      logger.warn("template:command failed", { cmd: cmd.slice(0, 80), error: String(e) });
+    }
+  }
+}
 
 // ── Types ──
 
@@ -42,6 +58,7 @@ export type CreateOpts = {
   timeoutMs?: number;
   runtime?: "node22" | "node24" | "python3.13";
   snapshotId?: string;
+  templateId?: string;
   ports?: number[];
 };
 
@@ -113,6 +130,11 @@ export async function createOpencodeSandbox(opts: CreateOpts): Promise<SandboxSe
 
   // 2) كتابة إعداد opencode.json
   await configureOpencode(sandbox, opts);
+
+  // 2.5) زرع قالب المشروع (إن طُلب ولم نستعد Snapshot/مستودعاً)
+  if (opts.templateId && !opts.snapshotId && !opts.githubUrl) {
+    await applyTemplate(sandbox, opts.templateId);
+  }
 
   // 3) التحقق من المشروع
   if (opts.githubUrl && !opts.snapshotId) {

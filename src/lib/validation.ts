@@ -25,6 +25,7 @@ export const sandboxCreateSchema = z.object({
   timeoutMs: z.number().int().min(60_000).max(5 * 60 * 60 * 1000).optional(),
   runtime: z.enum(["node22", "node24", "python3.13"]).optional(),
   ports: z.array(z.number().int().min(1024).max(65535)).max(5).optional(),
+  template: z.enum(["blank", "nextjs", "express-api", "fastapi", "static-site"]).optional(),
 });
 
 export const execSchema = z.object({

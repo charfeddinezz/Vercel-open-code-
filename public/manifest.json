@@ -1,13 +1,22 @@
 {
   "name": "OpenCode Cloud",
   "short_name": "OpenCode",
-  "description": "واجهة OpenCode الأصلية على Vercel Sandbox",
+  "description": "واجهة OpenCode الأصلية على Vercel Sandbox — AI Agent وTerminal وجلسات متعددة من هاتفك",
   "start_url": "/dashboard",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#0a0a0a",
   "theme_color": "#7c3aed",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["developer tools", "productivity"],
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "جلسة جديدة", "url": "/dashboard" },
+    { "name": "حالة النظام", "url": "/status" }
   ]
 }

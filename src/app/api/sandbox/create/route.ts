@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
       vcpus: body.vcpus,
       timeoutMs: body.timeoutMs,
       runtime: body.runtime,
+      templateId: body.template,
       ports: body.ports,
       snapshotId,
     });

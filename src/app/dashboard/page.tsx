@@ -3,6 +3,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ModelPicker } from "@/components/ModelPicker";
 import { ShareModal } from "@/components/ShareModal";
+import { TEMPLATES } from "@/lib/templates";
+import { usePreferences } from "@/lib/preferences";
 
 type SandboxRow = {
   sandboxId: string;
@@ -33,6 +35,17 @@ export default function DashboardPage() {
   const [health, setHealth] = useState<Health | null>(null);
   const [rowBusy, setRowBusy] = useState("");
   const [shareId, setShareId] = useState<string | null>(null);
+  const [template, setTemplate] = useState("blank");
+  const prefs = usePreferences();
+
+  // تطبيق التفضيلات المحفوظة عند أول تحميل
+  useEffect(() => {
+    setModel(prefs.defaultModel);
+    setRuntime(prefs.defaultRuntime);
+    setVcpus(prefs.defaultVcpus);
+    setTimeoutMin(prefs.defaultTimeoutMin);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const refresh = useCallback(async () => {
     try {
@@ -62,7 +75,7 @@ export default function DashboardPage() {
       const r = await fetch("/api/sandbox/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectName: projectName || undefined, githubUrl: githubUrl || undefined, model, password: password || undefined, vcpus, runtime, timeoutMs: timeoutMin * 60 * 1000 }),
+        body: JSON.stringify({ projectName: projectName || undefined, githubUrl: githubUrl || undefined, model, password: password || undefined, vcpus, runtime, timeoutMs: timeoutMin * 60 * 1000, template }),
       });
       const j = await r.json();
       if (!r.ok) throw new Error([j.error, j.hint].filter(Boolean).join(" — "));
@@ -106,6 +119,8 @@ export default function DashboardPage() {
               {health.ok ? "● النظام جاهز" : "● تحقق من الإعداد"}
             </a>
           )}
+          <Link href="/status" className="text-xs px-3 py-1.5 rounded-full border border-white/15 hover:bg-white/10">حالة النظام</Link>
+          <Link href="/settings" className="text-xs px-3 py-1.5 rounded-full border border-white/15 hover:bg-white/10">⚙️ الإعدادات</Link>
           <span className="hidden sm:inline text-sm text-zinc-400">لوحة التحكم</span>
         </div>
       </header>
@@ -134,6 +149,19 @@ export default function DashboardPage() {
             <label className="block">
               <span className="text-sm">GitHub URL (اختياري — لاستنساخ مشروع)</span>
               <input value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} placeholder="https://github.com/you/repo.git" dir="ltr" className="mt-1 w-full rounded-xl bg-black border border-white/10 px-3 py-2.5 outline-none focus:border-violet-500" />
+            </label>
+
+            <label className="block">
+              <span className="text-sm">قالب المشروع</span>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {TEMPLATES.map((t) => (
+                  <button key={t.id} type="button" onClick={() => { setTemplate(t.id); setModel(t.suggestedModel); if (t.id !== "blank" && !githubUrl) setRuntime(t.runtime); }} className={`rounded-xl border p-3 text-right transition ${template === t.id ? "border-violet-500 bg-violet-500/10" : "border-white/10 bg-black hover:border-white/25"}`} aria-pressed={template === t.id}>
+                    <span className="text-base">{t.icon} <span className="text-sm font-semibold">{t.name}</span></span>
+                    <span className="block text-[11px] text-zinc-400 mt-1 leading-4">{t.description}</span>
+                  </button>
+                ))}
+              </div>
+              {githubUrl && <span className="block text-[11px] text-amber-300 mt-1">عند وجود رابط GitHub يُستنسخ المستودع ويُتجاهل القالب.</span>}
             </label>
 
             <ModelPicker value={model} onChange={setModel} />

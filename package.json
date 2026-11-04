@@ -1,6 +1,6 @@
 {
   "name": "opencode-cloud",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "تشغيل OpenCode الأصلي داخل Vercel Sandbox مع واجهته الكاملة — AI Agent، Terminal، Git، جلسات متعددة، ودعم Android",
   "private": true,
   "type": "module",
